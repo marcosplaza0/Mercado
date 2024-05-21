@@ -1,5 +1,7 @@
+from os import walk
 import flet
 from flet import *
+from importes.inputs import InputTienda, InputJefe, Tabla
 
 
 ANCHO_PAGINA = 1680
@@ -108,24 +110,35 @@ class Inicio(View):
         ]
 
 
-class Header(Row):
+class Header(Container):
     def __init__(self, titulo, function):
         super().__init__()
-        self.alignment = MainAxisAlignment.SPACE_BETWEEN
         self.vertical_alignment = CrossAxisAlignment.CENTER
-        self.controls = [
-            IconButton(
-                icons.MENU,
-                on_click=lambda e: function(e),
-            ),
-            Text(
-                titulo,
-                color=colors.BLACK,
-                size=30,
-                weight=FontWeight.BOLD,
-            ),
-            Divider(),
-        ]
+        self.padding = padding.only(top=10, bottom=12)
+        self.margin = margin.only(bottom=10)
+        self.bgcolor = colors.GREY_200
+        self.shadow = BoxShadow(
+            spread_radius=1,
+            blur_radius=15,
+            color=colors.BLUE_GREY_300,
+            offset=Offset(0, 0),
+            blur_style=ShadowBlurStyle.OUTER,
+        )
+        self.content = Row(
+            [
+                Container(width=12),
+                IconButton(
+                    icons.MENU,
+                    on_click=lambda e: function(e),
+                ),
+                Text(
+                    "  " + titulo,
+                    color=colors.BLACK,
+                    size=30,
+                    weight=FontWeight.BOLD,
+                ),
+            ]
+        )
 
 
 class First_page(View):
@@ -146,7 +159,6 @@ class First_page(View):
                 content=Column(
                     controls=[
                         Header("Inicio", self.drawer.show_drawer),
-                        Divider(height=1),
                     ],
                 ),
             )
@@ -171,7 +183,6 @@ class Pagina_empleados(View):
                 content=Column(
                     controls=[
                         Header("Añadir Empleados", self.drawer.show_drawer),
-                        Divider(height=1),
                     ],
                 ),
             )
@@ -188,6 +199,7 @@ class Pagina_tiendas(View):
         )
         self.drawer: NavigationDrawer = Menu_drawer(self)
         self.page = pg
+        self.tablon = Tabla()
         self.controls = [
             Container(
                 bgcolor=colors.WHITE,
@@ -196,118 +208,53 @@ class Pagina_tiendas(View):
                 content=Column(
                     controls=[
                         Header("Añadir Tiendas", self.drawer.show_drawer),
-                        Divider(height=1),
+                        Row(
+                            alignment=MainAxisAlignment.SPACE_AROUND,
+                            controls=[
+                                Row(
+                                    controls=[
+                                        Card(
+                                            elevation=25,
+                                            content=Container(
+                                                margin=margin.only(top=30),
+                                                padding=padding.only(
+                                                    top=40, left=20, right=20, bottom=30
+                                                ),
+                                                border_radius=10,
+                                                content=InputJefe(
+                                                    self.tablon.fill_data
+                                                ),
+                                            ),
+                                        ),
+                                        Container(width=20),
+                                        Card(
+                                            elevation=25,
+                                            content=Container(
+                                                margin=margin.only(top=30),
+                                                padding=padding.only(
+                                                    top=40, left=20, right=20, bottom=30
+                                                ),
+                                                border_radius=10,
+                                                content=InputTienda(
+                                                    self.tablon.fill_data
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                                VerticalDivider(
+                                    width=9, thickness=3, color=colors.BLACK
+                                ),
+                                Column(
+                                    height=650,
+                                    scroll=ScrollMode.ALWAYS,
+                                    controls=[
+                                        self.tablon,
+                                    ],
+                                ),
+                            ],
+                        ),
                     ],
                 ),
             )
         ]
-
-
-class Casilla_de_informacion(TextField):
-    def __init__(self, titulo, hint, tipo) -> None:
-        super().__init__()
-        self.label = titulo
-        self.border = InputBorder.UNDERLINE
-        self.filled = True
-        self.hint_text = hint
-        self.hint_style = TextStyle(color=colors.BLACK54)
-        self.bgcolor = colors.BLACK12
-        self.color = colors.BLACK
-        self.label_style = TextStyle(color=colors.BLACK)
-        if tipo == "str":
-            self.input_filter = TextOnlyInputFilter()
-            self.keyboard_type = KeyboardType.TEXT
-        else:
-            self.input_filter = NumbersOnlyInputFilter()
-            self.keyboard_type = KeyboardType.NUMBER
-
-
-class InputTienda(Column):
-    def __init__(self) -> None:
-        super().__init__()
-        self.informador = Text()
-
-    def build(self):
-        return Container(
-            padding=padding.only(left=30, right=30),
-            content=Column(
-                controls=[
-                    self.glucemia_inicial,
-                    self.glucemia_final,
-                    self.raciones,
-                    self.unidades,
-                    TextButton(
-                        "Añadir nota", icon=icons.ADD, on_click=self.add_clicked
-                    ),
-                    self.informador,
-                ]
-            ),
-        )
-
-    def cambiar_rojo(self, TextField, text) -> bool:
-        if TextField.nota.value != "":
-            TextField.nota.label = text
-            TextField.nota.label_style = TextStyle(color=colors.BLACK)
-            return True
-
-        TextField.nota.label = text + " es obligatorio *"
-        TextField.nota.label_style = TextStyle(color=colors.RED)
-
-        return False
-
-    def add_clicked(self, e) -> None:
-        operacion = self.cambiar_rojo(self.glucemia_inicial, "Glucemia Inicial")
-        operacion = self.cambiar_rojo(self.raciones, "Comida") and operacion
-        operacion = self.cambiar_rojo(self.unidades, "Insulina") and operacion
-
-        if operacion:
-            Fecha = datetime.now().strftime("%b %d, %Y %I:%M")
-            db = Database.ConnectToDatabase()
-            if self.glucemia_final.nota.value == "":
-                Database.InsertDatabase(
-                    db,
-                    (
-                        Fecha,
-                        float(self.glucemia_inicial.nota.value),
-                        None,
-                        float(self.raciones.nota.value),
-                        float(self.unidades.nota.value),
-                        None,
-                    ),
-                )
-            else:
-                resultado = calculo(
-                    self.glucemia_inicial.nota.value,
-                    self.raciones.nota.value,
-                    self.unidades.nota.value,
-                    self.glucemia_final.nota.value,
-                )
-                Database.InsertDatabase(
-                    db,
-                    (
-                        Fecha,
-                        float(self.glucemia_inicial.nota.value),
-                        float(self.glucemia_final.nota.value),
-                        float(self.raciones.nota.value),
-                        float(self.unidades.nota.value),
-                        resultado,
-                    ),
-                )
-
-            db.close()
-
-            self.glucemia_inicial.nota.value = ""
-            self.raciones.nota.value = ""
-            self.unidades.nota.value = ""
-            self.glucemia_final.nota.value = ""
-            self.informador.color = colors.GREEN
-            self.informador.value = " Nota añadida con exito"
-        else:
-            self.informador.color = colors.RED
-            self.informador.value = " Los campos con * son obligatorios"
-
-        self.glucemia_inicial.update()
-        self.glucemia_final.update()
-        self.raciones.update()
-        self.unidades.update()
-        self.informador.update()

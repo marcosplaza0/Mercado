@@ -5,6 +5,7 @@ from importes import (
     Pagina_empleados,
     Inicio,
     First_page,
+    init_database,
 )
 
 
@@ -47,4 +48,5 @@ def main(page: Page):
 
 
 if __name__ == "__main__":
+    init_database()
     flet.app(target=main)
