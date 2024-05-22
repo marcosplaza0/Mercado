@@ -657,3 +657,65 @@ class InputBusqueda(Column):
 
     def tiendas_s(self, e):
         self.tabla.tiendas_s()
+
+
+class InputDelete(Column):
+    def __init__(self, funcion) -> None:
+        super().__init__()
+        self.nombre = Casilla_de_informacion("Nombre", "Nombre del producto", "str")
+        self.tienda = Casilla_de_informacion("Tienda", "Tienda a añadir", "str")
+        self.cantidad = Casilla_de_informacion("Cantidad", "Cantidad a sumar", "int")
+        self.informador = Text()
+        self.funcion = funcion
+
+        self.horizontal_alignment = CrossAxisAlignment.CENTER
+
+        self.controls = [
+            Text("Comprar", weight=FontWeight.BOLD, size=40),
+            Divider(height=18),
+            self.nombre,
+            Divider(height=10),
+            self.tienda,
+            Divider(height=10),
+            self.cantidad,
+            Divider(height=10),
+            TextButton("Añadir pedido", icon=icons.ADD, on_click=self.add_clicked),
+            self.informador,
+        ]
+
+    def add_clicked(self, e) -> None:
+        operacion = cambiar_rojo(self.nombre, "Nombre")
+        operacion = cambiar_rojo(self.tienda, "Tienda") and operacion
+        operacion = cambiar_rojo(self.cantidad, "Cantidad") and operacion
+
+        if operacion:
+
+            new_pedido = Compras(
+                self.nombre.value.upper(),
+                self.tienda.value.upper(),
+                int(self.cantidad.value),
+            )
+
+            if not new_pedido.producto_existe():
+                self.informador.color = colors.RED
+                self.informador.value = "Ese producto no existe en esa tienda"
+
+            else:
+
+                new_pedido.add_pedido()
+
+                self.informador.color = colors.GREEN
+                self.informador.value = "Aumento de stock realizado con exito"
+                self.funcion()
+                self.nombre.value = ""
+                self.tienda.value = ""
+                self.cantidad.value = ""
+
+        else:
+            self.informador.color = colors.RED
+            self.informador.value = " Los campos con * son obligatorios"
+
+        self.nombre.update()
+        self.tienda.update()
+        self.cantidad.update()
+        self.informador.update()

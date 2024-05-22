@@ -66,6 +66,12 @@ class Menu_drawer(NavigationDrawer):
                 icon=icons.LENS_OUTLINED,
                 selected_icon_content=Icon(icons.LENS),
             ),
+            Container(height=12),
+            NavigationDrawerDestination(
+                label="Eliminador",
+                icon=icons.BLOCK_OUTLINED,
+                selected_icon_content=Icon(icons.BLOCK),
+            ),
         ]
 
     def cambiar_pagina(self, e):
@@ -84,6 +90,8 @@ class Menu_drawer(NavigationDrawer):
             self.view.page.go("/pedidos")
         elif index == 6:
             self.view.page.go("/busqueda")
+        elif index == 7:
+            self.view.page.go("/basura")
 
     def show_drawer(self, e):
         self.view.drawer.open = True
@@ -531,6 +539,47 @@ class Pagina_busqueda(View):
                                     controls=[
                                         self.tablon,
                                     ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            )
+        ]
+
+
+class Pagina_deletes(View):
+    def __init__(self, pg):
+        super(Pagina_deletes, self).__init__(
+            route="/basura",
+            horizontal_alignment=CrossAxisAlignment.CENTER,
+            vertical_alignment=MainAxisAlignment.CENTER,
+            padding=0,
+        )
+        self.drawer: NavigationDrawer = Menu_drawer(self)
+        self.page = pg
+        self.tablon = TablaAvanzada()
+        self.controls = [
+            Container(
+                bgcolor=colors.WHITE,
+                margin=0,
+                height=self.page.height,
+                content=Column(
+                    controls=[
+                        Header("Borrar objetos", self.drawer.show_drawer),
+                        Row(
+                            alignment=MainAxisAlignment.SPACE_AROUND,
+                            controls=[
+                                Card(
+                                    elevation=25,
+                                    content=Container(
+                                        margin=margin.only(top=30),
+                                        padding=padding.only(
+                                            top=40, left=20, right=20, bottom=30
+                                        ),
+                                        border_radius=10,
+                                        content=InputBusqueda(self.tablon),
+                                    ),
                                 ),
                             ],
                         ),

@@ -6,4 +6,5 @@ from importes.paginas import Pagina_productos
 from importes.paginas import Pagina_pedidos
 from importes.paginas import Pagina_compras
 from importes.paginas import Pagina_busqueda
+from importes.paginas import Pagina_deletes
 from importes.bdd import init_database

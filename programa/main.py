@@ -7,6 +7,7 @@ from importes import (
     Pagina_pedidos,
     Pagina_compras,
     Pagina_busqueda,
+    Pagina_deletes,
     Inicio,
     First_page,
     init_database,
@@ -56,6 +57,9 @@ def main(page: Page):
         elif page.route == "/busqueda":
             Objeto_pagina_busqueda = Pagina_busqueda(page)
             page.views.append(Objeto_pagina_busqueda)
+        elif page.route == "/basura":
+            Objeto_pagina_borrador = Pagina_deletes(page)
+            page.views.append(Objeto_pagina_borrador)
 
         page.update()
 
