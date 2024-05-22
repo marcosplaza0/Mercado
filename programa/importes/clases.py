@@ -33,8 +33,8 @@ class Empleados(Persona):
         else:
             self.jornadas = "0.25"
 
-        self.tiendas: str = tiendas
-        self.sueldos: str = sueldos
+        self.tiendas: str | None = tiendas
+        self.sueldos: str | None = sueldos
         self.dni_jefe: str | None = dni_jefe
 
     def existe_empleado(self) -> bool:
@@ -127,9 +127,38 @@ class Empleados(Persona):
         db.commit()
         db.close()
 
+    def del_trabajo(self):
+        db = connect_to_database()
+        c = db.cursor()
+        c.execute(f"SELECT tiendas FROM empleados WHERE DNI_empleados = '{self.DNI}'")
+
+        info = c.fetchall()
+        lista: list = info[0][0].split("-")
+
+        c.execute(f"DELETE FROM empleados WHERE DNI_empleados = '{self.DNI}'")
+        for i in lista:
+            print(i)
+            c.execute(
+                f"UPDATE tiendas SET n_empleados = n_empleados -1 WHERE nombre = '{i}'"
+            )
+            c.execute(f"SELECT empleados FROM tiendas WHERE nombre = '{i}'")
+            empleados_v = c.fetchall()
+            empleados_v = empleados_v[0][0]
+            print(empleados_v)
+            resultado = empleados_v.replace(self.DNI, "")
+            print(resultado)
+            c.execute(
+                f"UPDATE tiendas SET empleados = '{resultado}' WHERE nombre = '{i}'"
+            )
+
+        db.commit()
+        db.close()
+
 
 class Producto:
-    def __init__(self, nombre, tienda, tipo, stock, precio_c, precio_v) -> None:
+    def __init__(
+        self, nombre, tienda, tipo=None, stock=None, precio_c=None, precio_v=None
+    ) -> None:
         self.nombre = nombre
         self.tienda = tienda
         self.tipo = tipo
@@ -183,6 +212,18 @@ class Producto:
 
         db.close()
 
+    def verificar_stock_0(self) -> bool:
+        db = connect_to_database()
+        c = db.cursor()
+        c.execute(f"SELECT Cantidad FROM productos WHERE Nombre = '{self.nombre}'")
+        info = c.fetchall()
+        c.close()
+        db.close()
+
+        if info[0][0] == 0:
+            return True
+        return False
+
     def del_producto(self) -> None:
         db = connect_to_database()
         c = db.cursor()
@@ -232,11 +273,11 @@ class Jefe(Persona):
 
 
 class Tienda:
-    def __init__(self, nombre, jefe, n_local, t_productos) -> None:
+    def __init__(self, nombre, jefe=None, n_local=None, t_productos=None) -> None:
         self.nombre: str = nombre
-        self.jefe: str = jefe
-        self.n_local: int = n_local
-        self.t_productos: str = t_productos
+        self.jefe: str | None = jefe
+        self.n_local: int | None = n_local
+        self.t_productos: str | None = t_productos
 
     def tienda_existente(self) -> bool:
         db = connect_to_database()
@@ -302,6 +343,66 @@ class Tienda:
         db.commit()
         db.close()
 
+    def hay_productos(self):
+        db = connect_to_database()
+        c = db.cursor()
+        c.execute(f"SELECT Nombre FROM productos WHERE Tienda = '{self.nombre}'")
+        info = c.fetchall()
+        c.close()
+        db.close()
+
+        if len(info) > 0:
+            return True
+        return False
+
+    def hay_empleados(self):
+        db = connect_to_database()
+        c = db.cursor()
+        c.execute(f"SELECT nombre FROM empleados WHERE tiendas LIKE '%{self.nombre}%'")
+        info = c.fetchall()
+        c.close()
+        db.close()
+
+        if len(info) > 0:
+            return True
+        return False
+
+    def del_tienda(self) -> None:
+        print(self.nombre)
+        db = connect_to_database()
+        c = db.cursor()
+        c.execute(f"DELETE FROM tiendas WHERE nombre= '{self.nombre}'")
+        c.close()
+        db.commit()
+        db.close()
+
+    def resultado_dinero(self) -> str:
+        db = connect_to_database()
+        c = db.cursor()
+        c.execute(f"SELECT SUM(recibos) FROM pedidos WHERE tienda= '{self.nombre}'")
+        ganancias = c.fetchall()
+        c.execute(f"SELECT SUM(pago) FROM compras WHERE tienda= '{self.nombre}'")
+        perdidas = c.fetchall()
+        c.close()
+        db.close()
+
+        try:
+            ganancias = round(float(ganancias[0][0]), 2)
+        except TypeError:
+            ganancias = 0
+
+        try:
+            perdidas = round(float(perdidas[0][0]), 2)
+        except TypeError:
+            perdidas = 0
+
+        total = ganancias - perdidas
+        total = round(total, 2)
+
+        return (
+            f"Perdidas: {perdidas} €  Ganancias: {ganancias} € Balance total: {total} €"
+        )
+
 
 class Pedido:
     def __init__(self, producto, tienda, cantidad) -> None:
@@ -319,7 +420,7 @@ class Pedido:
         c.close()
         db.close()
 
-        if info[0][0] > self.cantidad:
+        if info[0][0] >= self.cantidad:
             return True
         return False
 
@@ -362,6 +463,9 @@ class Ventas(Pedido):
                 self.precio_pedido,
             ),
         )
+        c.execute(
+            f"UPDATE productos SET Cantidad = Cantidad - {self.cantidad} WHERE Nombre = '{self.producto}' and  Tienda = '{self.tienda}'"
+        )
         c.close()
         db.commit()
         db.close()
@@ -398,6 +502,9 @@ class Compras(Pedido):
                 self.cantidad,
                 self.precio_pedido,
             ),
+        )
+        c.execute(
+            f"UPDATE productos SET Cantidad = Cantidad + {self.cantidad} WHERE Nombre = '{self.producto}' and  Tienda = '{self.tienda}'"
         )
         c.close()
         db.commit()

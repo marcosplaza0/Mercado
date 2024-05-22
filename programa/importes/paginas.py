@@ -1,5 +1,31 @@
-import flet
-from flet import *
+from flet import (
+    Container,
+    NavigationDrawer,
+    icons,
+    colors,
+    NavigationDrawerDestination,
+    Icon,
+    View,
+    Page,
+    CrossAxisAlignment,
+    MainAxisAlignment,
+    Card,
+    Column,
+    Row,
+    Text,
+    TextSpan,
+    TextStyle,
+    FontWeight,
+    Divider,
+    ElevatedButton,
+    margin,
+    padding,
+    BoxShadow,
+    ShadowBlurStyle,
+    Offset,
+    IconButton,
+    ScrollMode,
+)
 from importes.inputs import (
     InputTienda,
     InputJefe,
@@ -8,9 +34,13 @@ from importes.inputs import (
     InputPedidos,
     InputCompras,
     InputBusqueda,
+    InputDelete_Empleados,
+    InputDelete_Productos,
+    InputDelete_Tienda,
+    Beneficios_por_tienda,
 )
 from importes.displays_info import Tabla, TablaAvanzada
-
+from importes.bdd import Sacar_dinero_mercado
 
 ANCHO_PAGINA = 1680
 ALTO_PAGINA = 900
@@ -197,6 +227,7 @@ class First_page(View):
             vertical_alignment=MainAxisAlignment.CENTER,
             padding=0,
         )
+        self.beneficios = Sacar_dinero_mercado()
         self.drawer: NavigationDrawer = Menu_drawer(self)
         self.page = pg
         self.controls = [
@@ -207,7 +238,12 @@ class First_page(View):
                 content=Column(
                     controls=[
                         Header("Inicio", self.drawer.show_drawer),
+                        Beneficios_por_tienda(),
+                        Divider(height=30),
+                        Text("Beneficios del Mercado", size=30, weight=FontWeight.BOLD),
+                        Text(self.beneficios, size=20),
                     ],
+                    horizontal_alignment=CrossAxisAlignment.CENTER,
                 ),
             )
         ]
@@ -578,7 +614,29 @@ class Pagina_deletes(View):
                                             top=40, left=20, right=20, bottom=30
                                         ),
                                         border_radius=10,
-                                        content=InputBusqueda(self.tablon),
+                                        content=InputDelete_Empleados(),
+                                    ),
+                                ),
+                                Card(
+                                    elevation=25,
+                                    content=Container(
+                                        margin=margin.only(top=30),
+                                        padding=padding.only(
+                                            top=40, left=20, right=20, bottom=30
+                                        ),
+                                        border_radius=10,
+                                        content=InputDelete_Productos(),
+                                    ),
+                                ),
+                                Card(
+                                    elevation=25,
+                                    content=Container(
+                                        margin=margin.only(top=30),
+                                        padding=padding.only(
+                                            top=40, left=20, right=20, bottom=30
+                                        ),
+                                        border_radius=10,
+                                        content=InputDelete_Tienda(),
                                     ),
                                 ),
                             ],

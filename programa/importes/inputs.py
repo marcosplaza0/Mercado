@@ -1,4 +1,23 @@
-from flet import *
+from flet import (
+    TextField,
+    colors,
+    InputBorder,
+    NumbersOnlyInputFilter,
+    Column,
+    Text,
+    TextStyle,
+    CrossAxisAlignment,
+    MainAxisAlignment,
+    FontWeight,
+    Divider,
+    icons,
+    TextButton,
+    Dropdown,
+    dropdown,
+    Row,
+    ElevatedButton,
+    IconButton,
+)
 from importes.clases import Producto, Empleados, Tienda, Jefe, Ventas, Compras
 from importes.bdd import (
     sacar_informacion,
@@ -33,6 +52,53 @@ class Casilla_de_informacion(TextField):
             pass
         else:
             self.input_filter = NumbersOnlyInputFilter()
+
+
+class Beneficios_por_tienda(Column):
+    def __init__(self) -> None:
+        super().__init__()
+        self.tienda = Casilla_de_informacion("Tienda", "Nombre de la tienda", "str")
+        self.informador = Text()
+        self.informador.size = 20
+        self.horizontal_alignment = CrossAxisAlignment.CENTER
+        self.controls = [
+            Text("Tiendas", weight=FontWeight.BOLD, size=40),
+            Row(
+                [
+                    self.tienda,
+                    TextButton(
+                        "Buscar",
+                        icon=icons.BROWSE_GALLERY,
+                        on_click=self.add_clicked,
+                    ),
+                ],
+                alignment=MainAxisAlignment.CENTER,
+            ),
+            self.informador,
+        ]
+
+    def add_clicked(self, e) -> None:
+        operacion = cambiar_rojo(self.tienda, "Tienda")
+
+        if operacion:
+            new_tienda = Tienda(
+                self.tienda.value.upper(),
+            )
+            if not new_tienda.tienda_existente():
+                self.informador.color = colors.RED
+                self.informador.value = "Esa tienda no existe"
+            else:
+
+                resultado = new_tienda.resultado_dinero()
+
+                self.informador.color = colors.GREEN
+                self.informador.value = resultado
+        else:
+            self.informador.color = colors.RED
+            self.informador.value = " Debes insertar el nombre de la tienda"
+
+        self.tienda.update()
+        self.informador.update()
 
 
 class InputTienda(Column):
@@ -595,10 +661,10 @@ class InputBusqueda(Column):
             "Consulta E x T", "Empleados por Tienda", "str"
         )
         self.tiendas_propietario = Casilla_de_informacion(
-            "Consulta T x P", "Tiendas por Propietario", "int"
+            "Consulta T x P", "Tiendas por Propietario", "str"
         )
         self.empleados_propietario = Casilla_de_informacion(
-            "Consulta E x P", "Empleados por Propietario", "int"
+            "Consulta E x P", "Empleados por Propietario", "str"
         )
         self.tiendas = ElevatedButton(
             "Ver las tiendas del mercado", on_click=self.tiendas_s
@@ -659,63 +725,164 @@ class InputBusqueda(Column):
         self.tabla.tiendas_s()
 
 
-class InputDelete(Column):
-    def __init__(self, funcion) -> None:
+class InputDelete_Empleados(Column):
+    def __init__(self) -> None:
         super().__init__()
-        self.nombre = Casilla_de_informacion("Nombre", "Nombre del producto", "str")
-        self.tienda = Casilla_de_informacion("Tienda", "Tienda a añadir", "str")
-        self.cantidad = Casilla_de_informacion("Cantidad", "Cantidad a sumar", "int")
+        self.DNI = Casilla_de_informacion(
+            "DNI", "Documento Nacional de Identidad", "str"
+        )
         self.informador = Text()
-        self.funcion = funcion
 
         self.horizontal_alignment = CrossAxisAlignment.CENTER
 
         self.controls = [
-            Text("Comprar", weight=FontWeight.BOLD, size=40),
+            Text("Empleados", weight=FontWeight.BOLD, size=40),
             Divider(height=18),
-            self.nombre,
+            self.DNI,
             Divider(height=10),
-            self.tienda,
-            Divider(height=10),
-            self.cantidad,
-            Divider(height=10),
-            TextButton("Añadir pedido", icon=icons.ADD, on_click=self.add_clicked),
+            TextButton(
+                "Eliminar empleado", icon=icons.BLOCK, on_click=self.del_empleado
+            ),
             self.informador,
         ]
 
-    def add_clicked(self, e) -> None:
-        operacion = cambiar_rojo(self.nombre, "Nombre")
-        operacion = cambiar_rojo(self.tienda, "Tienda") and operacion
-        operacion = cambiar_rojo(self.cantidad, "Cantidad") and operacion
+    def del_empleado(self, e) -> None:
+        operacion = cambiar_rojo(self.DNI, "Nombre")
 
         if operacion:
 
-            new_pedido = Compras(
-                self.nombre.value.upper(),
-                self.tienda.value.upper(),
-                int(self.cantidad.value),
+            del_empleado_v = Empleados(
+                self.DNI.value.upper(), None, None, None, None, None, None, None
             )
 
-            if not new_pedido.producto_existe():
+            if del_empleado_v.existe_empleado():
                 self.informador.color = colors.RED
-                self.informador.value = "Ese producto no existe en esa tienda"
+                self.informador.value = "Ese empleado no existe en la base de datos"
 
             else:
 
-                new_pedido.add_pedido()
+                del_empleado_v.del_trabajo()
 
                 self.informador.color = colors.GREEN
-                self.informador.value = "Aumento de stock realizado con exito"
-                self.funcion()
-                self.nombre.value = ""
+                self.informador.value = "Empleado eliminad con exito"
+                self.DNI.value = ""
+
+        else:
+            self.informador.color = colors.RED
+            self.informador.value = " El campo DNI es obligatiro"
+
+        self.DNI.update()
+        self.informador.update()
+        self.informador.update()
+
+
+class InputDelete_Productos(Column):
+    def __init__(self) -> None:
+        super().__init__()
+        self.Nombre = Casilla_de_informacion("Nombre", "Nombre del producto", "str")
+        self.tienda = Casilla_de_informacion("Tienda", "Nombre de la tienda", "str")
+        self.informador = Text()
+
+        self.horizontal_alignment = CrossAxisAlignment.CENTER
+
+        self.controls = [
+            Text("Productos", weight=FontWeight.BOLD, size=40),
+            Divider(height=18),
+            self.Nombre,
+            Divider(height=10),
+            self.tienda,
+            Divider(height=10),
+            TextButton(
+                "Eliminar producto", icon=icons.BLOCK, on_click=self.del_producto
+            ),
+            self.informador,
+        ]
+
+    def del_producto(self, e) -> None:
+        operacion = cambiar_rojo(self.Nombre, "Nombre")
+        operacion = cambiar_rojo(self.tienda, "Tienda") and operacion
+
+        if operacion:
+
+            del_producto_v = Producto(
+                self.Nombre.value.upper(), self.tienda.value.upper()
+            )
+
+            if del_producto_v.verificar_id():
+                self.informador.color = colors.RED
+                self.informador.value = "Ese producto no existe en esa tienda"
+
+            elif not del_producto_v.verificar_stock_0():
+                self.informador.color = colors.RED
+                self.informador.value = "No puedes borrar un producto con stock > 0"
+
+            else:
+
+                del_producto_v.del_producto()
+
+                self.informador.color = colors.GREEN
+                self.informador.value = "Producto eliminado con exito"
+                self.Nombre.value = ""
                 self.tienda.value = ""
-                self.cantidad.value = ""
 
         else:
             self.informador.color = colors.RED
             self.informador.value = " Los campos con * son obligatorios"
 
-        self.nombre.update()
+        self.Nombre.update()
         self.tienda.update()
-        self.cantidad.update()
+        self.informador.update()
+
+
+class InputDelete_Tienda(Column):
+    def __init__(self) -> None:
+        super().__init__()
+        self.tienda = Casilla_de_informacion("Tienda", "Nombre de la tienda", "str")
+        self.informador = Text()
+
+        self.horizontal_alignment = CrossAxisAlignment.CENTER
+
+        self.controls = [
+            Text("Tienda", weight=FontWeight.BOLD, size=40),
+            Divider(height=18),
+            self.tienda,
+            Divider(height=10),
+            TextButton("Eliminar tienda", icon=icons.BLOCK, on_click=self.del_tienda),
+            self.informador,
+        ]
+
+    def del_tienda(self, e) -> None:
+        operacion = cambiar_rojo(self.tienda, "Tienda")
+
+        if operacion:
+
+            del_tienda_v = Tienda(self.tienda.value.upper())
+
+            if not del_tienda_v.tienda_existente():
+                self.informador.color = colors.RED
+                self.informador.value = "Esa tienda no existe"
+
+            elif del_tienda_v.hay_productos():
+                self.informador.color = colors.RED
+                self.informador.value = (
+                    "No puedes borrar la tienda, todavia tiene productos"
+                )
+            elif del_tienda_v.hay_empleados():
+                self.informador.color = colors.RED
+                self.informador.value = (
+                    "No puedes borrar la tienda, todavia tiene empleados"
+                )
+            else:
+
+                del_tienda_v.del_tienda()
+
+                self.informador.color = colors.GREEN
+                self.informador.value = "Tienda eliminado con exito"
+                self.tienda.value = ""
+
+        else:
+            self.informador.color = colors.RED
+            self.informador.value = " El campo tienda es obligatorio"
+
+        self.tienda.update()
         self.informador.update()

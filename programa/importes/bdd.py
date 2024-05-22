@@ -139,30 +139,6 @@ trigger_add_empleado_insert: str = (
     """
 )
 
-trigger_remove_empleado: str = (
-    """
-        CREATE TRIGGER IF NOT EXISTS remove_n_empleados
-        AFTER DELETE ON empleados
-        BEGIN
-
-            UPDATE tiendas
-            SET empleados = REPLACE(
-                            REPLACE(
-                                REPLACE(
-                                    empleados,
-                                    '-' || OLD.DNI_empleados,
-                                    ''
-                                ),
-                                OLD.DNI_empleados || '-',
-                                ''
-                            ),
-                            OLD.DNI_empleados,
-                            ''
-                        )
-            WHERE nombre = OLD.tiendas;
-        END;
-    """
-)
 
 trigger_add_stock: str = (
     """
@@ -193,8 +169,6 @@ def init_database():
     c.executescript(trigger_del_tienda)
 
     c.executescript(trigger_add_empleado_insert)
-
-    c.executescript(trigger_remove_empleado)
 
     c.executescript(trigger_add_stock)
 
@@ -229,3 +203,29 @@ def UpdateDatabase(db, tabla, campo, restriccion, resultado, value):
     c.execute(f"UPDATE {tabla} set {campo}={resultado} WHERE {restriccion}=?", value)
     db.commit()
     c.close()
+
+
+def Sacar_dinero_mercado():
+    db = connect_to_database()
+    c = db.cursor()
+    c.execute("SELECT SUM(recibos) FROM pedidos")
+    ganancias = c.fetchall()
+    c.execute("SELECT SUM(pago) FROM compras")
+    perdidas = c.fetchall()
+    c.close()
+    db.close()
+
+    try:
+        ganancias = round(float(ganancias[0][0]), 2)
+    except TypeError:
+        ganancias = 0
+
+    try:
+        perdidas = round(float(perdidas[0][0]), 2)
+    except TypeError:
+        perdidas = 0
+
+    total = ganancias - perdidas
+    total = round(total, 2)
+
+    return f"Perdidas: {perdidas} €  Ganancias: {ganancias} € Balance total: {total} €"

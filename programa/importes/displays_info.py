@@ -1,4 +1,13 @@
-from flet import *
+from flet import (
+    DataTable,
+    DataColumn,
+    DataCell,
+    DataRow,
+    Text,
+    colors,
+    FontWeight,
+    TextStyle,
+)
 from importes.bdd import connect_to_database, select_sencillo
 
 
