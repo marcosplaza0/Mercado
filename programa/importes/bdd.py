@@ -11,16 +11,19 @@ crear_tabla_jefes: str = (
     ")"
 )
 
+
 crear_tabla_tiendas: str = (
     "CREATE TABLE IF NOT EXISTS tiendas ("
     "nombre VARCHAR(20) PRIMARY KEY NOT NULL,"
     "jefe VARCHAR(9) NOT NULL,"
     "n_local INT NOT NULL,"
+    "t_productos VARCHAR(50) NOT NULL,"
     "n_empleados INT DEFAULT 0,"
     "empleados VARCHAR(100) DEFAULT NULL,"
     "FOREIGN KEY (jefe) REFERENCES jefes(DNI_jefe)"
     ")"
 )
+
 
 crear_tabla_empleados: str = (
     "CREATE TABLE IF NOT EXISTS empleados ("
@@ -37,9 +40,49 @@ crear_tabla_empleados: str = (
     ")"
 )
 
+
+crear_tabla_productos: str = (
+    "CREATE TABLE IF NOT EXISTS productos ("
+    "Nombre	VARCHAR(50) NOT NULL,"
+    "Tipo	VARCHAR(50) NOT NULL,"
+    "Cantidad	INT,"
+    "Tienda	VARCHAR(20) NOT NULL,"
+    "Precio_compra	DECIMAL(11, 2) NOT NULL,"
+    "Precio_venta	DECIMAL(11, 2) NOT NULL,"
+    "PRIMARY KEY(Nombre,Tienda)"
+    ");"
+)
+
+
+crear_tabla_pedidos: str = (
+    "CREATE TABLE IF NOT EXISTS pedidos ("
+    "ID	INTEGER NOT NULL,"
+    "producto	VARCHAR(50) NOT NULL,"
+    "tienda	VARCHAR(20) NOT NULL,"
+    "cantidad	INTEGER NOT NULL,"
+    "recibos	DECIMAL(11, 2),"
+    "Fecha	DATETIME,"
+    "PRIMARY KEY(ID AUTOINCREMENT)"
+    ");"
+)
+
+
+crear_tabla_compras: str = (
+    "CREATE TABLE IF NOT EXISTS compras ("
+    "ID	INTEGER NOT NULL,"
+    "producto	VARCHAR(50) NOT NULL,"
+    "tienda	VARCHAR(20) NOT NULL,"
+    "cantidad	INTEGER NOT NULL,"
+    "pago	DECIMAL(11, 2) NOT NULL,"
+    "fecha	DATETIME,"
+    "PRIMARY KEY(ID AUTOINCREMENT)"
+    ");"
+)
+
+
 trigger_add_tienda: str = (
     """
-        CREATE TRIGGER add_tiendas
+        CREATE TRIGGER IF NOT EXISTS add_tiendas
         AFTER INSERT ON tiendas
         BEGIN
             UPDATE jefes
@@ -52,9 +95,10 @@ trigger_add_tienda: str = (
     """
 )
 
+
 trigger_del_tienda: str = (
     """
-        CREATE TRIGGER delete_tiendas
+        CREATE TRIGGER IF NOT EXISTS delete_tiendas
         AFTER DELETE ON tiendas
         BEGIN
             UPDATE jefes
@@ -77,26 +121,82 @@ trigger_del_tienda: str = (
 )
 
 
+trigger_add_empleado_insert: str = (
+    """
+        CREATE TRIGGER IF NOT EXISTS update_n_empleados_insert
+        AFTER INSERT ON empleados
+        BEGIN
+            UPDATE tiendas
+            SET n_empleados = n_empleados + 1
+            WHERE nombre = NEW.tiendas;
+            UPDATE tiendas
+            SET empleados = CASE
+                WHEN empleados IS NULL THEN NEW.DNI_empleados
+                ELSE empleados || '-' || NEW.DNI_empleados
+            END
+            WHERE nombre = NEW.tiendas;
+        END;
+    """
+)
+
+trigger_remove_empleado: str = (
+    """
+        CREATE TRIGGER IF NOT EXISTS remove_n_empleados
+        AFTER DELETE ON empleados
+        BEGIN
+
+            UPDATE tiendas
+            SET empleados = REPLACE(
+                            REPLACE(
+                                REPLACE(
+                                    empleados,
+                                    '-' || OLD.DNI_empleados,
+                                    ''
+                                ),
+                                OLD.DNI_empleados || '-',
+                                ''
+                            ),
+                            OLD.DNI_empleados,
+                            ''
+                        )
+            WHERE nombre = OLD.tiendas;
+        END;
+    """
+)
+
+trigger_add_stock: str = (
+    """
+    CREATE TRIGGER IF NOT EXISTS update_stock_after_compra
+    AFTER INSERT ON compras
+    FOR EACH ROW
+    BEGIN
+        UPDATE productos
+        SET Cantidad = Cantidad + NEW.cantidad
+        WHERE Nombre = NEW.producto AND Tienda = NEW.tienda;
+    END;
+"""
+)
+
+
 def init_database():
     db = sqlite3.connect("mercado_marcos.db")
     c = db.cursor()
     c.execute(crear_tabla_jefes)
     c.execute(crear_tabla_tiendas)
     c.execute(crear_tabla_empleados)
+    c.execute(crear_tabla_productos)
+    c.execute(crear_tabla_pedidos)
+    c.execute(crear_tabla_compras)
 
-    c.execute(
-        "SELECT name FROM sqlite_master WHERE type='trigger' AND name='add_tiendas';"
-    )
-    trigger_exists = c.fetchone()
-    if not trigger_exists:
-        c.executescript(trigger_add_tienda)
+    c.executescript(trigger_add_tienda)
 
-    c.execute(
-        "SELECT name FROM sqlite_master WHERE type='trigger' AND name='delete_tiendas';"
-    )
-    trigger_exists = c.fetchone()
-    if not trigger_exists:
-        c.executescript(trigger_del_tienda)
+    c.executescript(trigger_del_tienda)
+
+    c.executescript(trigger_add_empleado_insert)
+
+    c.executescript(trigger_remove_empleado)
+
+    c.executescript(trigger_add_stock)
 
     db.commit()
     c.close()
@@ -124,28 +224,8 @@ def sacar_informacion(db, tabla, informacion, campo, restriccion):
     return info
 
 
-def insert_in_tiendas(db, informacion):
+def UpdateDatabase(db, tabla, campo, restriccion, resultado, value):
     c = db.cursor()
-    c.execute(
-        "INSERT INTO tiendas (nombre, jefe, n_local) VALUES(?,?,?)",
-        informacion,
-    )
-    c.close()
-    db.commit()
-
-
-def insert_in_jefes(db, informacion):
-    c = db.cursor()
-    c.execute(
-        "INSERT INTO jefes (DNI_jefe, nombre, apellidos, telefono, domicilio) VALUES(?,?,?,?,?)",
-        informacion,
-    )
-    c.close()
-    db.commit()
-
-
-def UpdateDatabase(db, tabla, campo, value):
-    c = db.cursor()
-    c.execute(f"UPDATE {tabla} set {campo}=? WHERE id=?", [value])
+    c.execute(f"UPDATE {tabla} set {campo}={resultado} WHERE {restriccion}=?", value)
     db.commit()
     c.close()

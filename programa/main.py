@@ -3,6 +3,10 @@ from flet import Page, CrossAxisAlignment, MainAxisAlignment
 from importes import (
     Pagina_tiendas,
     Pagina_empleados,
+    Pagina_productos,
+    Pagina_pedidos,
+    Pagina_compras,
+    Pagina_busqueda,
     Inicio,
     First_page,
     init_database,
@@ -40,6 +44,18 @@ def main(page: Page):
         elif page.route == "/empleados":
             Objeto_pagina_empleados = Pagina_empleados(page)
             page.views.append(Objeto_pagina_empleados)
+        elif page.route == "/productos":
+            Objeto_pagina_productos = Pagina_productos(page)
+            page.views.append(Objeto_pagina_productos)
+        elif page.route == "/pedidos":
+            Objeto_pagina_pedidos = Pagina_pedidos(page)
+            page.views.append(Objeto_pagina_pedidos)
+        elif page.route == "/compras":
+            Objeto_pagina_compras = Pagina_compras(page)
+            page.views.append(Objeto_pagina_compras)
+        elif page.route == "/busqueda":
+            Objeto_pagina_busqueda = Pagina_busqueda(page)
+            page.views.append(Objeto_pagina_busqueda)
 
         page.update()
 

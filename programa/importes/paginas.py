@@ -1,7 +1,15 @@
-from os import walk
 import flet
 from flet import *
-from importes.inputs import InputTienda, InputJefe, Tabla
+from importes.inputs import (
+    InputTienda,
+    InputJefe,
+    InputEmpleado,
+    InputProductos,
+    InputPedidos,
+    InputCompras,
+    InputBusqueda,
+)
+from importes.displays_info import Tabla, TablaAvanzada
 
 
 ANCHO_PAGINA = 1680
@@ -34,6 +42,30 @@ class Menu_drawer(NavigationDrawer):
                 icon=icons.PERSON_OUTLINED,
                 selected_icon_content=Icon(icons.PERSON),
             ),
+            Container(height=12),
+            NavigationDrawerDestination(
+                label="Añadir productos",
+                icon=icons.FOOD_BANK_OUTLINED,
+                selected_icon_content=Icon(icons.FOOD_BANK),
+            ),
+            Container(height=12),
+            NavigationDrawerDestination(
+                label="Añadir stock",
+                icon=icons.PLUS_ONE_OUTLINED,
+                selected_icon_content=Icon(icons.PLUS_ONE),
+            ),
+            Container(height=12),
+            NavigationDrawerDestination(
+                label="Hacer pedidos",
+                icon=icons.SHOPIFY_OUTLINED,
+                selected_icon_content=Icon(icons.SHOPIFY),
+            ),
+            Container(height=12),
+            NavigationDrawerDestination(
+                label="Buscar Información",
+                icon=icons.LENS_OUTLINED,
+                selected_icon_content=Icon(icons.LENS),
+            ),
         ]
 
     def cambiar_pagina(self, e):
@@ -44,6 +76,14 @@ class Menu_drawer(NavigationDrawer):
             self.view.page.go("/tiendas")
         elif index == 2:
             self.view.page.go("/empleados")
+        elif index == 3:
+            self.view.page.go("/productos")
+        elif index == 4:
+            self.view.page.go("/compras")
+        elif index == 5:
+            self.view.page.go("/pedidos")
+        elif index == 6:
+            self.view.page.go("/busqueda")
 
     def show_drawer(self, e):
         self.view.drawer.open = True
@@ -165,30 +205,6 @@ class First_page(View):
         ]
 
 
-class Pagina_empleados(View):
-    def __init__(self, pg):
-        super(Pagina_empleados, self).__init__(
-            route="/empleados",
-            horizontal_alignment=CrossAxisAlignment.CENTER,
-            vertical_alignment=MainAxisAlignment.CENTER,
-            padding=0,
-        )
-        self.drawer: NavigationDrawer = Menu_drawer(self)
-        self.page = pg
-        self.controls = [
-            Container(
-                bgcolor=colors.WHITE,
-                margin=0,
-                height=self.page.height,
-                content=Column(
-                    controls=[
-                        Header("Añadir Empleados", self.drawer.show_drawer),
-                    ],
-                ),
-            )
-        ]
-
-
 class Pagina_tiendas(View):
     def __init__(self, pg):
         super(Pagina_tiendas, self).__init__(
@@ -199,7 +215,11 @@ class Pagina_tiendas(View):
         )
         self.drawer: NavigationDrawer = Menu_drawer(self)
         self.page = pg
-        self.tablon = Tabla()
+        self.tablon = Tabla(
+            ("DNI", "Nombre", "Apellidos", "Tiendas"),
+            "jefes",
+            "DNI_jefe, nombre, apellidos, tiendas",
+        )
         self.controls = [
             Container(
                 bgcolor=colors.WHITE,
@@ -218,7 +238,7 @@ class Pagina_tiendas(View):
                                             content=Container(
                                                 margin=margin.only(top=30),
                                                 padding=padding.only(
-                                                    top=40, left=20, right=20, bottom=30
+                                                    top=30, left=20, right=20, bottom=20
                                                 ),
                                                 border_radius=10,
                                                 content=InputJefe(
@@ -242,8 +262,268 @@ class Pagina_tiendas(View):
                                         ),
                                     ],
                                 ),
-                                VerticalDivider(
-                                    width=9, thickness=3, color=colors.BLACK
+                                Column(
+                                    height=650,
+                                    scroll=ScrollMode.ALWAYS,
+                                    controls=[
+                                        self.tablon,
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            )
+        ]
+
+
+class Pagina_empleados(View):
+    def __init__(self, pg):
+        super(Pagina_empleados, self).__init__(
+            route="/empleados",
+            horizontal_alignment=CrossAxisAlignment.CENTER,
+            vertical_alignment=MainAxisAlignment.CENTER,
+            padding=0,
+        )
+        self.drawer: NavigationDrawer = Menu_drawer(self)
+        self.page = pg
+        self.tablon = Tabla(
+            ("DNI", "Nombre", "Apellidos", "Jefe", "Tiendas"),
+            "empleados",
+            "DNI_empleados, nombre, apellidos, dni_jefe, tiendas",
+        )
+        self.controls = [
+            Container(
+                bgcolor=colors.WHITE,
+                margin=0,
+                height=self.page.height,
+                content=Column(
+                    controls=[
+                        Header("Añadir Empleados", self.drawer.show_drawer),
+                        Row(
+                            alignment=MainAxisAlignment.SPACE_AROUND,
+                            controls=[
+                                Card(
+                                    elevation=25,
+                                    content=Container(
+                                        margin=margin.only(top=30),
+                                        padding=padding.only(
+                                            top=40, left=20, right=20, bottom=30
+                                        ),
+                                        border_radius=10,
+                                        content=InputEmpleado(self.tablon.fill_data),
+                                    ),
+                                ),
+                                Column(
+                                    height=650,
+                                    scroll=ScrollMode.ALWAYS,
+                                    controls=[
+                                        self.tablon,
+                                    ],
+                                ),
+                            ],
+                        ),
+                        Text(
+                            "                   Para ingresar un"
+                            " empleado ya existente, solo hace falta"
+                            " que rellene\n                   los"
+                            " campos de DNI, Tienda, Tipo de Jornada y Sueldo",
+                            size=20,
+                        ),
+                    ],
+                ),
+            )
+        ]
+
+
+class Pagina_productos(View):
+    def __init__(self, pg):
+        super(Pagina_productos, self).__init__(
+            route="/productos",
+            horizontal_alignment=CrossAxisAlignment.CENTER,
+            vertical_alignment=MainAxisAlignment.CENTER,
+            padding=0,
+        )
+        self.drawer: NavigationDrawer = Menu_drawer(self)
+        self.page = pg
+        self.tablon = Tabla(
+            ("Nombre", "Tipo", "Cantidad", "Tiendas", "Precio_c", "Precio_v"),
+            "productos",
+            "Nombre, Tipo, Cantidad, Tienda, Precio_compra, Precio_venta",
+        )
+        self.controls = [
+            Container(
+                bgcolor=colors.WHITE,
+                margin=0,
+                height=self.page.height,
+                content=Column(
+                    controls=[
+                        Header("Añadir Productos", self.drawer.show_drawer),
+                        Row(
+                            alignment=MainAxisAlignment.SPACE_AROUND,
+                            controls=[
+                                Card(
+                                    elevation=25,
+                                    content=Container(
+                                        margin=margin.only(top=30),
+                                        padding=padding.only(
+                                            top=40, left=20, right=20, bottom=30
+                                        ),
+                                        border_radius=10,
+                                        content=InputProductos(self.tablon.fill_data),
+                                    ),
+                                ),
+                                Column(
+                                    height=650,
+                                    scroll=ScrollMode.ALWAYS,
+                                    controls=[
+                                        self.tablon,
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            )
+        ]
+
+
+class Pagina_pedidos(View):
+    def __init__(self, pg):
+        super(Pagina_pedidos, self).__init__(
+            route="/pedidos",
+            horizontal_alignment=CrossAxisAlignment.CENTER,
+            vertical_alignment=MainAxisAlignment.CENTER,
+            padding=0,
+        )
+        self.drawer: NavigationDrawer = Menu_drawer(self)
+        self.page = pg
+        self.tablon = Tabla(
+            ("Nombre", "Tienda", "Cantidad", "Coste (€)", "Fecha"),
+            "pedidos",
+            "producto, tienda, cantidad, recibos, Fecha",
+        )
+        self.controls = [
+            Container(
+                bgcolor=colors.WHITE,
+                margin=0,
+                height=self.page.height,
+                content=Column(
+                    controls=[
+                        Header("Pedidos", self.drawer.show_drawer),
+                        Row(
+                            alignment=MainAxisAlignment.SPACE_AROUND,
+                            controls=[
+                                Card(
+                                    elevation=25,
+                                    content=Container(
+                                        margin=margin.only(top=30),
+                                        padding=padding.only(
+                                            top=40, left=20, right=20, bottom=30
+                                        ),
+                                        border_radius=10,
+                                        content=InputPedidos(self.tablon.fill_data),
+                                    ),
+                                ),
+                                Column(
+                                    height=650,
+                                    scroll=ScrollMode.ALWAYS,
+                                    controls=[
+                                        self.tablon,
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            )
+        ]
+
+
+class Pagina_compras(View):
+    def __init__(self, pg):
+        super(Pagina_compras, self).__init__(
+            route="/compras",
+            horizontal_alignment=CrossAxisAlignment.CENTER,
+            vertical_alignment=MainAxisAlignment.CENTER,
+            padding=0,
+        )
+        self.drawer: NavigationDrawer = Menu_drawer(self)
+        self.page = pg
+        self.tablon = Tabla(
+            ("Nombre", "Tienda", "Cantidad", "Importe (€)", "Fecha"),
+            "compras",
+            "producto, tienda, cantidad, pago, Fecha",
+        )
+        self.controls = [
+            Container(
+                bgcolor=colors.WHITE,
+                margin=0,
+                height=self.page.height,
+                content=Column(
+                    controls=[
+                        Header("Añadir stock", self.drawer.show_drawer),
+                        Row(
+                            alignment=MainAxisAlignment.SPACE_AROUND,
+                            controls=[
+                                Card(
+                                    elevation=25,
+                                    content=Container(
+                                        margin=margin.only(top=30),
+                                        padding=padding.only(
+                                            top=40, left=20, right=20, bottom=30
+                                        ),
+                                        border_radius=10,
+                                        content=InputCompras(self.tablon.fill_data),
+                                    ),
+                                ),
+                                Column(
+                                    height=650,
+                                    scroll=ScrollMode.ALWAYS,
+                                    controls=[
+                                        self.tablon,
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            )
+        ]
+
+
+class Pagina_busqueda(View):
+    def __init__(self, pg):
+        super(Pagina_busqueda, self).__init__(
+            route="/busqueda",
+            horizontal_alignment=CrossAxisAlignment.CENTER,
+            vertical_alignment=MainAxisAlignment.CENTER,
+            padding=0,
+        )
+        self.drawer: NavigationDrawer = Menu_drawer(self)
+        self.page = pg
+        self.tablon = TablaAvanzada()
+        self.controls = [
+            Container(
+                bgcolor=colors.WHITE,
+                margin=0,
+                height=self.page.height,
+                content=Column(
+                    controls=[
+                        Header("Busqueda personalizada", self.drawer.show_drawer),
+                        Row(
+                            alignment=MainAxisAlignment.SPACE_AROUND,
+                            controls=[
+                                Card(
+                                    elevation=25,
+                                    content=Container(
+                                        margin=margin.only(top=30),
+                                        padding=padding.only(
+                                            top=40, left=20, right=20, bottom=30
+                                        ),
+                                        border_radius=10,
+                                        content=InputBusqueda(self.tablon),
+                                    ),
                                 ),
                                 Column(
                                     height=650,
