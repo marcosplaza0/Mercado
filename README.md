@@ -22,14 +22,13 @@ en el trabajo de programación.
 - La aplicación se va a crear pensando en usarla desde un ordenador, asique, el diseño 
   de la misma estará pensado para un monitor de ordenador convencional.
 
-- En base a mis conocimientos, intentaré hacer la aplicación aprueba de 
-  inserciones SQL.
-
 - Y, el código intentaré que sea lo más limpio, conciso y sencillo posible dentro de 
   mis capacidades.
 
 - Una vez terminada la aplicación, crearé un .exe para no tener que ejecutar el código
   desde el cmd o la terminal preferida.
+  
+- La aplicación no es aprueba de inserciones SQL.
 
 
 
